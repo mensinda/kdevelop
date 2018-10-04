@@ -176,8 +176,12 @@ ClangSupport::ClangSupport(QObject* parent, const QVariantList& )
     , m_refactoring(nullptr)
     , m_index(nullptr)
 {
+    clangDebug() << "Detected Clang version:" << ClangHelpers::clangVersion();
+
     {
-        const auto builtinDir = ClangIntegration::DUChainUtils::clangBuiltinIncludePath();
+        const auto builtinDir = ClangHelpers::clangBuiltinIncludePath();
+        clangDebug() << "Using Clang builtin include path:" << builtinDir;
+
         const auto headerToCheck = QLatin1String("cpuid.h");
         if (!QFile::exists(builtinDir + QLatin1Char('/') + headerToCheck)) {
             setErrorDescription(i18n("The clang builtin include path \"%1\" is invalid (missing %2 header).\n"
