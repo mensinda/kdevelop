@@ -49,7 +49,7 @@ MesonBuilder::MesonBuilder(QObject* parent)
 KJob * MesonBuilder::configure(KDevelop::IProject* project)
 {
     auto job = new KDevelop::OutputExecuteJob();
-    *job << "meson" << project->path().toLocalFile();
+    *job << QStringLiteral("meson") << project->path().toLocalFile();
     job->setWorkingDirectory(Meson::buildDirectory(project));
     return job;
 }
