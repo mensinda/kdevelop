@@ -62,7 +62,7 @@
     ],
     "X-KDevelop-Mode": "NoGUI",
     "X-KDevelop-ProjectFilesFilter": [
-        "*.pro"
+        "meson.build"
     ],
     "X-KDevelop-ProjectFilesFilterDescription": "Meson Project Files"
 }
