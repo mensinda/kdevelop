@@ -20,16 +20,17 @@
 #include "mesonimportjob.h"
 #include "mesonconfig.h"
 #include "mesonmanager.h"
-#include <util/path.h>
 #include <interfaces/icore.h>
 #include <interfaces/iruntime.h>
 #include <interfaces/iruntimecontroller.h>
+#include <util/path.h>
 
-#include <QtConcurrentRun>
+#include <QDebug>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QDebug>
+#include <QtConcurrentRun>
+#include <debug.h>
 
 using namespace KDevelop;
 
@@ -41,18 +42,19 @@ MesonImportJob::MesonImportJob(MesonManager* manager, KDevelop::IProject* projec
     connect(&m_futureWatcher, &QFutureWatcher<QJsonObject>::finished, this, &MesonImportJob::importFinished);
 }
 
-//TODO: probably want to process the object in this function (e.g. see CMakeImportJsonJob)
-QJsonObject import(const KDevelop::Path &commandsFile, const KDevelop::Path &sourcePath, const KDevelop::Path &builddir)
+// TODO: probably want to process the object in this function (e.g. see CMakeImportJsonJob)
+QJsonObject import(const Path& commandsFile, const Path& sourcePath, const Path& builddir)
 {
     QFile f(commandsFile.toLocalFile());
     if (!f.open(QFile::ReadOnly)) {
+        qCWarning(KDEV_Meson) << "Failed to open " << commandsFile;
         return {};
     }
 
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &error);
     if (error.error) {
-        qDebug() << "error parsing" << commandsFile << error.errorString();
+        qCWarning(KDEV_Meson) << "error parsing" << commandsFile << error.errorString();
         return {};
     }
     return doc.object();
@@ -60,12 +62,12 @@ QJsonObject import(const KDevelop::Path &commandsFile, const KDevelop::Path &sou
 
 void MesonImportJob::start()
 {
-    const Path currentBuildDir(Meson::buildDirectory(m_project));
-    const Path commandsFile(currentBuildDir, QLatin1String("compile_commands.json"));
+    Meson::BuildDir buildDir = Meson::currentBuildDir(m_project);
+    const Path commandsFile(buildDir.buildDir, QLatin1String("compile_commands.json"));
     const auto sourceDir = m_project->path();
 
     auto rt = ICore::self()->runtimeController()->currentRuntime();
-    auto future = QtConcurrent::run(import, commandsFile, sourceDir, rt->pathInRuntime(currentBuildDir));
+    auto future = QtConcurrent::run(import, commandsFile, sourceDir, rt->pathInRuntime(buildDir.buildDir));
     m_futureWatcher.setFuture(future);
 }
 
@@ -74,4 +76,13 @@ void MesonImportJob::importFinished()
     auto future = m_futureWatcher.future();
     auto data = future.result();
     m_manager->setProjectData(m_project, data);
+    emitResult();
+}
+
+bool MesonImportJob::doKill()
+{
+    if (m_futureWatcher.isRunning()) {
+        m_futureWatcher.cancel();
+    }
+    return true;
 }

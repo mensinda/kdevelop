@@ -54,7 +54,7 @@
     "X-KDevelop-Category": "Project",
     "X-KDevelop-FileManager": "Meson",
     "X-KDevelop-IRequired": [
-        "org.kdevelop.IMesonBuilder"
+        "org.kdevelop.IProjectBuilder"
     ],
     "X-KDevelop-Interfaces": [
         "org.kdevelop.IBuildSystemManager",

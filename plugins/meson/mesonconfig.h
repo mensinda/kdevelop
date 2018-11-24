@@ -17,21 +17,36 @@
     Boston, MA 02110-1301, USA.
 */
 
-#ifndef MESONCONFIG_H
-#define MESONCONFIG_H
+#pragma once
 
 #include <KConfigGroup>
+#include <util/path.h>
 
-namespace KDevelop { class IProject; }
-
-//TODO: you probably want to be able to keep settings for different build directories
-namespace Meson
+namespace KDevelop
 {
-    static const QString RootConfig = QStringLiteral("BuildDirecory");
-    static const QString BuildDirectory = QStringLiteral("BuildDirecory");
-
-    KConfigGroup projectGroup(KDevelop::IProject* project);
-    QUrl buildDirectory(KDevelop::IProject* project);
+class IProject;
 }
 
-#endif
+namespace Meson
+{
+
+struct BuildDir {
+    KDevelop::Path buildDir;
+    QString mesonBackend;
+};
+
+struct MesonConfig
+{
+    int currentIndex = -1;
+    QVector<BuildDir> buildDirs;
+
+    int addBuildDir(BuildDir dir);
+    bool removeBuildDir(int index);
+};
+
+KConfigGroup rootGroup(KDevelop::IProject* project);
+BuildDir currentBuildDir(KDevelop::IProject* project);
+MesonConfig getMesonConfig(KDevelop::IProject* project);
+void writeMesonConfig(KDevelop::IProject* project, MesonConfig const& cfg);
+
+}

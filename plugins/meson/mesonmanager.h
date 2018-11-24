@@ -22,6 +22,7 @@
 
 #include <project/abstractfilemanagerplugin.h>
 #include <project/interfaces/ibuildsystemmanager.h>
+#include "mesonconfig.h"
 
 class MesonBuilder;
 
@@ -32,11 +33,36 @@ class MesonManager: public KDevelop::AbstractFileManagerPlugin, public KDevelop:
 
 public:
     explicit MesonManager( QObject* parent = nullptr, const QVariantList& args = QVariantList() );
+    ~MesonManager() override;
+
+    // ********************
+    // * Custom functions *
+    // ********************
+
+    /// Create a new build directory and write it into the config
+    Meson::BuildDir newBuildDirectory(KDevelop::IProject* project);
+
+    /// Returns a list of all supported Meson backends (for now only ninja)
+    QVector<QString> supportedMesonBackends() const;
+    QString defaultMesonBackend() const;
+
+    void setProjectData(KDevelop::IProject* project, const QJsonObject &data);
+
+    // *********************************
+    // * AbstractFileManagerPlugin API *
+    // *********************************
+
+    KDevelop::IProjectFileManager::Features features() const override;
+    KDevelop::ProjectFolderItem * createFolderItem(KDevelop::IProject * project, const KDevelop::Path & path, KDevelop::ProjectBaseItem * parent = nullptr) override;
+
+    // ***************************
+    // * IBuildSystemManager API *
+    // ***************************
+
+    KJob * createImportJob(KDevelop::ProjectFolderItem * item) override;
 
     KDevelop::IProjectBuilder* builder() const override;
 
-    KJob * createImportJob(KDevelop::ProjectFolderItem * item) override;
-    void setProjectData(KDevelop::IProject* project, const QJsonObject &data);
 
     // FIXME now: should use compile_commands.json for these (i.e. m_projects)
     KDevelop::Path::List includeDirectories(KDevelop::ProjectBaseItem*) const override { return {}; }
@@ -62,3 +88,4 @@ private:
 };
 
 #endif
+

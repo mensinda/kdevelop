@@ -17,8 +17,7 @@
     Boston, MA 02110-1301, USA.
 */
 
-#ifndef MESONBUILDER_H
-#define MESONBUILDER_H
+#pragma once
 
 #include <project/interfaces/iprojectbuilder.h>
 
@@ -32,11 +31,18 @@ public:
     KJob* build(KDevelop::ProjectBaseItem* item) override;
     KJob* clean(KDevelop::ProjectBaseItem* item) override;
     KJob* install(KDevelop::ProjectBaseItem* dom, const QUrl& installPath) override;
+    KJob* prune(KDevelop::IProject* project) override;
 
     KJob* configure(KDevelop::IProject* project) override;
+
+Q_SIGNALS:
+    void built(KDevelop::ProjectBaseItem*);
+    void installed(KDevelop::ProjectBaseItem*);
+    void cleaned(KDevelop::ProjectBaseItem*);
+    void failed(KDevelop::ProjectBaseItem*);
+    void configured(KDevelop::IProject*);
+    void pruned(KDevelop::IProject*);
 
 private:
     KDevelop::IProjectBuilder* m_ninjaBuilder = nullptr;
 };
-
-#endif // MESONBUILDER_H

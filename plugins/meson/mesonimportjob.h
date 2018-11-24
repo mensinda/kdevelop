@@ -35,6 +35,7 @@ public:
     MesonImportJob(MesonManager* manager, KDevelop::IProject* project, QObject* parent);
 
     void start() override;
+    bool doKill() override;
 
 private:
     void importFinished();

@@ -24,6 +24,7 @@
 #include <outputview/outputexecutejob.h>
 #include "mesonbuilder.h"
 #include "mesonconfig.h"
+#include <debug.h>
 
 MesonBuilder::MesonBuilder(QObject* parent)
     : QObject(parent)
@@ -32,40 +33,45 @@ MesonBuilder::MesonBuilder(QObject* parent)
     if (p) {
         m_ninjaBuilder = p->extension<KDevelop::IProjectBuilder>();
         if (m_ninjaBuilder) {
-            connect(p, SIGNAL(built(KDevelop::ProjectBaseItem*)), this,
-                    SIGNAL(built(KDevelop::ProjectBaseItem*)));
-            connect(p, SIGNAL(cleaned(KDevelop::ProjectBaseItem*)), this,
-                    SIGNAL(cleaned(KDevelop::ProjectBaseItem*)));
-            connect(p, SIGNAL(installed(KDevelop::ProjectBaseItem*)), this,
-                    SIGNAL(installed(KDevelop::ProjectBaseItem*)));
-            connect(p, SIGNAL(failed(KDevelop::ProjectBaseItem*)), this,
-                    SIGNAL(failed(KDevelop::ProjectBaseItem*)));
-            connect(p, SIGNAL(makeTargetBuilt(KDevelop::ProjectBaseItem*,QString)), this,
-                    SIGNAL(pruned(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(built(KDevelop::ProjectBaseItem*)),     this, SIGNAL(built(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(installed(KDevelop::ProjectBaseItem*)), this, SIGNAL(installed(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(cleaned(KDevelop::ProjectBaseItem*)),   this, SIGNAL(cleaned(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(failed(KDevelop::ProjectBaseItem*)),    this, SIGNAL(failed(KDevelop::ProjectBaseItem*)));
         }
     }
 }
 
-KJob * MesonBuilder::configure(KDevelop::IProject* project)
+KJob* MesonBuilder::configure(KDevelop::IProject* project)
 {
+    Meson::BuildDir buildDir = Meson::currentBuildDir(project);
+    qCDebug(KDEV_Meson) << "MesonBuilder::configure() PATH=" << buildDir.buildDir;
     auto job = new KDevelop::OutputExecuteJob();
     *job << QStringLiteral("meson") << project->path().toLocalFile();
-    job->setWorkingDirectory(Meson::buildDirectory(project));
+    job->setWorkingDirectory(buildDir.buildDir.toUrl());
     return job;
 }
 
-KJob * MesonBuilder::build(KDevelop::ProjectBaseItem* item)
+KJob* MesonBuilder::build(KDevelop::ProjectBaseItem* item)
 {
     //TODO: probably want to make sure it's configured first
     return m_ninjaBuilder->install(item);
 }
 
-KJob * MesonBuilder::clean(KDevelop::ProjectBaseItem* item)
+KJob* MesonBuilder::clean(KDevelop::ProjectBaseItem* item)
 {
     return m_ninjaBuilder->clean(item);
 }
 
-KJob * MesonBuilder::install(KDevelop::ProjectBaseItem* dom, const QUrl& installPath)
+KJob* MesonBuilder::install(KDevelop::ProjectBaseItem* dom, const QUrl& installPath)
 {
     return m_ninjaBuilder->install(dom, installPath);
 }
+
+KJob* MesonBuilder::prune(KDevelop::IProject* project)
+{
+    qCDebug(KDEV_Meson) << "TODO: Implement prune; project == " << project->name();
+    return nullptr;
+}
+
+
+
