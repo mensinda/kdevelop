@@ -17,33 +17,104 @@
     Boston, MA 02110-1301, USA.
 */
 
+#include "mesonbuilder.h"
+#include "mesonconfig.h"
+#include <QDir>
+#include <QFileInfo>
+#include <debug.h>
 #include <interfaces/icore.h>
 #include <interfaces/iplugincontroller.h>
 #include <interfaces/iproject.h>
-#include <util/path.h>
 #include <outputview/outputexecutejob.h>
-#include "mesonbuilder.h"
-#include "mesonconfig.h"
-#include <debug.h>
+#include <util/path.h>
+#include <klocalizedstring.h>
+
+using namespace KDevelop;
+
+class ErrorJob : public KJob
+{
+    Q_OBJECT
+public:
+    ErrorJob(QObject* parent, const QString& error)
+        : KJob(parent)
+        , m_error(error)
+    {
+    }
+
+    void start() override
+    {
+        setError(!m_error.isEmpty());
+        setErrorText(m_error);
+        emitResult();
+    }
+
+private:
+    QString m_error;
+};
 
 MesonBuilder::MesonBuilder(QObject* parent)
     : QObject(parent)
 {
-    auto p = KDevelop::ICore::self()->pluginController()->pluginForExtension(QStringLiteral("org.kdevelop.IProjectBuilder"), QStringLiteral("KDevNinjaBuilder"));
+    auto p = KDevelop::ICore::self()->pluginController()->pluginForExtension(
+        QStringLiteral("org.kdevelop.IProjectBuilder"), QStringLiteral("KDevNinjaBuilder"));
     if (p) {
         m_ninjaBuilder = p->extension<KDevelop::IProjectBuilder>();
         if (m_ninjaBuilder) {
-            connect(p, SIGNAL(built(KDevelop::ProjectBaseItem*)),     this, SIGNAL(built(KDevelop::ProjectBaseItem*)));
-            connect(p, SIGNAL(installed(KDevelop::ProjectBaseItem*)), this, SIGNAL(installed(KDevelop::ProjectBaseItem*)));
-            connect(p, SIGNAL(cleaned(KDevelop::ProjectBaseItem*)),   this, SIGNAL(cleaned(KDevelop::ProjectBaseItem*)));
-            connect(p, SIGNAL(failed(KDevelop::ProjectBaseItem*)),    this, SIGNAL(failed(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(built(KDevelop::ProjectBaseItem*)), this, SIGNAL(built(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(installed(KDevelop::ProjectBaseItem*)), this,
+                    SIGNAL(installed(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(cleaned(KDevelop::ProjectBaseItem*)), this, SIGNAL(cleaned(KDevelop::ProjectBaseItem*)));
+            connect(p, SIGNAL(failed(KDevelop::ProjectBaseItem*)), this, SIGNAL(failed(KDevelop::ProjectBaseItem*)));
         }
     }
 }
 
+MesonBuilder::DirectoryStatus MesonBuilder::evaluateBuildDirectory(const Path& path, QString backend)
+{
+    QString pathSTR = path.toLocalFile();
+    if (pathSTR.isEmpty()) {
+        return EMPTY_STRING;
+    }
+
+    QFileInfo info(pathSTR);
+    if (!info.exists()) {
+        return DOES_NOT_EXIST;
+    }
+
+    if (!info.isDir() || !info.isReadable() || !info.isWritable()) {
+        return INVALID_BUILD_DIR;
+    }
+
+    QDir dir(path.toLocalFile());
+    if (dir.isEmpty(QDir::AllEntries)) {
+        return CLEAN;
+    }
+
+    QStringList requiredPaths = { QStringLiteral("meson-logs"), QStringLiteral("meson-private") };
+    if (backend == QStringLiteral("ninja")) {
+        requiredPaths += QStringLiteral("build.ninja");
+    }
+
+    // Check if this is a meson directory
+    QStringList entries = dir.entryList();
+    for (auto const& i : requiredPaths) {
+        if (!entries.contains(i)) {
+            return DIR_NOT_EMPTY;
+        }
+    }
+
+    return MESON_CONFIGURED;
+}
+
 KJob* MesonBuilder::configure(KDevelop::IProject* project)
 {
+    Q_ASSERT(project);
     Meson::BuildDir buildDir = Meson::currentBuildDir(project);
+    if (!buildDir.isValid()) {
+        qCWarning(KDEV_Meson) << "The current build directory is invalid";
+        return new ErrorJob(this, i18n("The current build directory for %1 is invalid").arg(project->name()));
+    }
+
     qCDebug(KDEV_Meson) << "MesonBuilder::configure() PATH=" << buildDir.buildDir;
     auto job = new KDevelop::OutputExecuteJob();
     *job << QStringLiteral("meson") << project->path().toLocalFile();
@@ -53,7 +124,7 @@ KJob* MesonBuilder::configure(KDevelop::IProject* project)
 
 KJob* MesonBuilder::build(KDevelop::ProjectBaseItem* item)
 {
-    //TODO: probably want to make sure it's configured first
+    // TODO: probably want to make sure it's configured first
     return m_ninjaBuilder->install(item);
 }
 
@@ -73,5 +144,4 @@ KJob* MesonBuilder::prune(KDevelop::IProject* project)
     return nullptr;
 }
 
-
-
+#include "mesonbuilder.moc"

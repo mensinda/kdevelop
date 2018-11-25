@@ -1,5 +1,5 @@
 /* This file is part of KDevelop
-    Copyright 2017 Aleix Pol Gonzalez <aleixpol@kde.org>
+    Copyright 2018 Daniel Mensinger <daniel@mensinger-ka.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -19,40 +19,39 @@
 
 #pragma once
 
-#include <KConfigGroup>
-#include <util/path.h>
+#include "mesonconfig.h"
+#include <QDialog>
 
-namespace KDevelop
-{
-class IProject;
+class QDialogButtonBox;
+
+namespace KDevelop {
+    class IProject;
 }
 
-namespace Meson
+namespace Ui
 {
-
-struct BuildDir {
-    KDevelop::Path buildDir;
-    KDevelop::Path installPrefix;
-    KDevelop::Path mesonExecutable;
-    QString buildType;
-    QString mesonBackend;
-    QString extraMesonArgs;
-
-    bool isValid() const;
-};
-
-struct MesonConfig
-{
-    int currentIndex = -1;
-    QVector<BuildDir> buildDirs;
-
-    int addBuildDir(BuildDir dir);
-    bool removeBuildDir(int index);
-};
-
-KConfigGroup rootGroup(KDevelop::IProject* project);
-BuildDir currentBuildDir(KDevelop::IProject* project);
-MesonConfig getMesonConfig(KDevelop::IProject* project);
-void writeMesonConfig(KDevelop::IProject* project, MesonConfig const& cfg);
-
+class MesonNewBuildDir;
 }
+
+class MesonNewBuildDir : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit MesonNewBuildDir(KDevelop::IProject *project, QWidget* parent = nullptr);
+    ~MesonNewBuildDir() override;
+    MesonNewBuildDir() = delete;
+
+    void setStatus(QString const& str, bool validConfig);
+
+    bool isConfigValid() const;
+    Meson::BuildDir currentConfig() const;
+
+private Q_SLOTS:
+    void resetFields();
+    void updated();
+
+private:
+    bool m_configIsValid = false;
+    KDevelop::IProject* m_project = nullptr;
+    Ui::MesonNewBuildDir* m_ui = nullptr;
+};

@@ -31,6 +31,7 @@
 #include <QJsonObject>
 #include <QtConcurrentRun>
 #include <debug.h>
+#include <klocalizedstring.h>
 
 using namespace KDevelop;
 
@@ -63,6 +64,14 @@ QJsonObject import(const Path& commandsFile, const Path& sourcePath, const Path&
 void MesonImportJob::start()
 {
     Meson::BuildDir buildDir = Meson::currentBuildDir(m_project);
+    if (!buildDir.isValid()) {
+        qCWarning(KDEV_Meson) << "The current build directory is invalid";
+        setError(true);
+        setErrorText(i18n("The current build directory for %1 is invalid").arg(m_project->name()));
+        emitResult();
+        return;
+    }
+
     const Path commandsFile(buildDir.buildDir, QLatin1String("compile_commands.json"));
     const auto sourceDir = m_project->path();
 

@@ -21,6 +21,7 @@
 #include "mesonbuilder.h"
 #include "mesonconfig.h"
 #include "mesonimportjob.h"
+#include "mesonnewbuilddir.h"
 #include <interfaces/iproject.h>
 #include <project/projectmodel.h>
 #include <util/executecompositejob.h>
@@ -29,6 +30,7 @@
 #include <KLocalizedString>
 #include <KPluginFactory>
 #include <QFileDialog>
+#include <QStandardPaths>
 
 #include "debug.h"
 
@@ -109,12 +111,15 @@ IProjectBuilder* MesonManager::builder() const
 
 Meson::BuildDir MesonManager::newBuildDirectory(IProject* project)
 {
-    // TODO: Make a real dialog
-    Meson::BuildDir buildDir;
-    const QString path = QFileDialog::getExistingDirectory(nullptr, i18n("Choose a build directory"));
-    buildDir.buildDir = Path(path);
-    buildDir.mesonBackend = GENERATOR_NINJA;
+    Q_ASSERT(project);
+    MesonNewBuildDir newBD(project);
 
+    if (!newBD.exec() || !newBD.isConfigValid()) {
+        qCWarning(KDEV_Meson) << "Failed to create new build directory for project " << project->name();
+        return Meson::BuildDir();
+    }
+
+    Meson::BuildDir buildDir = newBD.currentConfig();
     Meson::MesonConfig mesonCfg = Meson::getMesonConfig(project);
     mesonCfg.addBuildDir(buildDir);
     Meson::writeMesonConfig(project, mesonCfg);
@@ -122,15 +127,38 @@ Meson::BuildDir MesonManager::newBuildDirectory(IProject* project)
     return buildDir;
 }
 
-QVector<QString> MesonManager::supportedMesonBackends() const
+QStringList MesonManager::supportedMesonBackends() const
 {
-    // TODO check for Windows / Unix. Add support for VS, XCode?
+    // Maybe add support for other generators
     return { GENERATOR_NINJA };
 }
 
 QString MesonManager::defaultMesonBackend() const
 {
     return GENERATOR_NINJA;
+}
+
+Path MesonManager::findMeson() const
+{
+    QString mesonPath;
+
+    const static QStringList mesonExecutables = { QStringLiteral("meson"), QStringLiteral("meson.py") };
+    const static QStringList mesonPaths
+        = { QStringLiteral("%1/.local/bin").arg(QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0]) };
+
+    for (auto const& i : mesonExecutables) {
+        mesonPath = QStandardPaths::findExecutable(i);
+        if (!mesonPath.isEmpty()) {
+            break;
+        }
+
+        mesonPath = QStandardPaths::findExecutable(i, mesonPaths);
+        if (!mesonPath.isEmpty()) {
+            break;
+        }
+    }
+
+    return Path(mesonPath);
 }
 
 void MesonManager::setProjectData(IProject* project, const QJsonObject& data)

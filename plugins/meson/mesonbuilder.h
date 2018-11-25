@@ -20,12 +20,15 @@
 #pragma once
 
 #include <project/interfaces/iprojectbuilder.h>
+#include <util/path.h>
 
 class MesonBuilder : public QObject, public KDevelop::IProjectBuilder
 {
     Q_OBJECT
     Q_INTERFACES(KDevelop::IProjectBuilder)
 public:
+    enum DirectoryStatus { DOES_NOT_EXIST, CLEAN, MESON_CONFIGURED, INVALID_BUILD_DIR, DIR_NOT_EMPTY, EMPTY_STRING };
+
     explicit MesonBuilder(QObject* parent);
 
     KJob* build(KDevelop::ProjectBaseItem* item) override;
@@ -34,6 +37,9 @@ public:
     KJob* prune(KDevelop::IProject* project) override;
 
     KJob* configure(KDevelop::IProject* project) override;
+
+    // Evaluate a directory for the use with meson
+    static DirectoryStatus evaluateBuildDirectory(KDevelop::Path const& path, QString backend);
 
 Q_SIGNALS:
     void built(KDevelop::ProjectBaseItem*);

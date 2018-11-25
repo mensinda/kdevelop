@@ -43,8 +43,10 @@ public:
     Meson::BuildDir newBuildDirectory(KDevelop::IProject* project);
 
     /// Returns a list of all supported Meson backends (for now only ninja)
-    QVector<QString> supportedMesonBackends() const;
+    QStringList supportedMesonBackends() const;
     QString defaultMesonBackend() const;
+
+    KDevelop::Path findMeson() const;
 
     void setProjectData(KDevelop::IProject* project, const QJsonObject &data);
 

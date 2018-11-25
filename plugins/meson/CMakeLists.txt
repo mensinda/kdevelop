@@ -5,8 +5,10 @@ set(mesonbuilder_SRCS
     mesonbuilder.cpp
     mesonconfig.cpp
     mesonimportjob.cpp
+    mesonnewbuilddir.cpp
 )
 
+ki18n_wrap_ui(mesonbuilder_SRCS mesonnewbuilddir.ui)
 ecm_qt_declare_logging_category(mesonbuilder_SRCS
     HEADER debug.h
     IDENTIFIER KDEV_Meson

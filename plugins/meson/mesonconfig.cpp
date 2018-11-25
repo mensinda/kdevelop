@@ -35,6 +35,10 @@ static const QString CURRENT_INDEX = QStringLiteral("Current Build Directory Ind
 
 static const QString BUILD_DIR_SEC = QStringLiteral("BuildDir %1");
 static const QString BUILD_DIR_PATH = QStringLiteral("Build Directory Path");
+static const QString INSTALL_PREFIX = QStringLiteral("Installation prefix");
+static const QString MESON_EXE = QStringLiteral("Meson executable");
+static const QString EXTRA_ARGS = QStringLiteral("Additional meson arguments");
+static const QString BUILD_TYPE = QStringLiteral("Build type");
 static const QString BACKEND = QStringLiteral("Meson Generator Backend");
 
 int MesonConfig::addBuildDir(BuildDir dir)
@@ -93,7 +97,22 @@ MesonConfig Meson::getMesonConfig(IProject* project)
         KConfigGroup current = root.group(section);
         BuildDir currBD;
         currBD.buildDir = Path(current.readEntry(BUILD_DIR_PATH, QString()));
+        currBD.installPrefix = Path(current.readEntry(INSTALL_PREFIX, QString()));
+        currBD.mesonExecutable = Path(current.readEntry(MESON_EXE, QString()));
+        currBD.buildType = current.readEntry(BUILD_TYPE, QStringLiteral("debug"));
         currBD.mesonBackend = current.readEntry(BACKEND, QString());
+        currBD.extraMesonArgs = current.readEntry(EXTRA_ARGS, QString());
+
+        // Try to find meson if the config is bad
+        if (currBD.mesonExecutable.isEmpty()) {
+            Q_ASSERT(project);
+            IBuildSystemManager* ibsm = project->buildSystemManager();
+            MesonManager* bsm = dynamic_cast<MesonManager*>(ibsm);
+            if (bsm) {
+                currBD.mesonExecutable = bsm->findMeson();
+            }
+        }
+
         result.buildDirs.push_back(currBD);
     }
 
@@ -126,7 +145,11 @@ void Meson::writeMesonConfig(IProject* project, const MesonConfig& cfg)
         KConfigGroup current = root.group(BUILD_DIR_SEC.arg(counter++));
 
         current.writeEntry(BUILD_DIR_PATH, i.buildDir.path());
+        current.writeEntry(INSTALL_PREFIX, i.installPrefix.path());
+        current.writeEntry(MESON_EXE, i.mesonExecutable.path());
+        current.writeEntry(BUILD_TYPE, i.buildType);
         current.writeEntry(BACKEND, i.mesonBackend);
+        current.writeEntry(EXTRA_ARGS, i.extraMesonArgs);
     }
 }
 
@@ -153,4 +176,13 @@ BuildDir Meson::currentBuildDir(IProject* project)
     }
 
     return cfg.buildDirs[cfg.currentIndex];
+}
+
+bool Meson::BuildDir::isValid() const
+{
+    if (buildDir.isEmpty() || mesonExecutable.isEmpty() || buildType.isEmpty()) {
+        return false;
+    }
+
+    return true;
 }
