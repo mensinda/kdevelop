@@ -171,6 +171,9 @@ void MesonNewBuildDir::updated()
     case MesonBuilder::EMPTY_STRING:
         setStatus(i18n("The build directory field must not be empty"), false);
         break;
+    case MesonBuilder::___UNDEFINED___:
+        setStatus(i18n("You have reached unreachable code. This is a bug"), false);
+        break;
     }
 }
 

@@ -1,10 +1,12 @@
 add_definitions(-DTRANSLATION_DOMAIN=\"kdevmesonmanager\")
 
 set(mesonbuilder_SRCS
-    mesonmanager.cpp
     mesonbuilder.cpp
     mesonconfig.cpp
     mesonimportjob.cpp
+    mesonjob.cpp
+    mesonjobprune.cpp
+    mesonmanager.cpp
     mesonnewbuilddir.cpp
 )
 

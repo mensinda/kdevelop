@@ -22,12 +22,25 @@
 #include <project/interfaces/iprojectbuilder.h>
 #include <util/path.h>
 
+namespace Meson
+{
+struct BuildDir;
+}
+
 class MesonBuilder : public QObject, public KDevelop::IProjectBuilder
 {
     Q_OBJECT
     Q_INTERFACES(KDevelop::IProjectBuilder)
 public:
-    enum DirectoryStatus { DOES_NOT_EXIST, CLEAN, MESON_CONFIGURED, INVALID_BUILD_DIR, DIR_NOT_EMPTY, EMPTY_STRING };
+    enum DirectoryStatus {
+        DOES_NOT_EXIST = 0,
+        CLEAN,
+        MESON_CONFIGURED,
+        INVALID_BUILD_DIR,
+        DIR_NOT_EMPTY,
+        EMPTY_STRING,
+        ___UNDEFINED___
+    };
 
     explicit MesonBuilder(QObject* parent);
 
@@ -37,9 +50,11 @@ public:
     KJob* prune(KDevelop::IProject* project) override;
 
     KJob* configure(KDevelop::IProject* project) override;
+    KJob* configure(KDevelop::IProject* project, Meson::BuildDir const& buildDir,
+                    DirectoryStatus status = ___UNDEFINED___);
 
-    // Evaluate a directory for the use with meson
-    static DirectoryStatus evaluateBuildDirectory(KDevelop::Path const& path, QString backend);
+    /// Evaluate a directory for the use with meson
+    static DirectoryStatus evaluateBuildDirectory(KDevelop::Path const& path, QString const& backend);
 
 Q_SIGNALS:
     void built(KDevelop::ProjectBaseItem*);
@@ -51,4 +66,6 @@ Q_SIGNALS:
 
 private:
     KDevelop::IProjectBuilder* m_ninjaBuilder = nullptr;
+
+    KJob* configureIfRequired(KDevelop::IProject* project, KJob *realJob);
 };
