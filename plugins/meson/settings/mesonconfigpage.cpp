@@ -18,11 +18,14 @@
 */
 
 #include "mesonconfigpage.h"
+#include "mesonbuilder.h"
+#include "mesonjob.h"
 #include "mesonmanager.h"
 #include "mesonnewbuilddir.h"
 #include "ui_mesonconfigpage.h"
 #include <QIcon>
 #include <debug.h>
+#include <executecompositejob.h>
 #include <interfaces/iplugin.h>
 #include <interfaces/iproject.h>
 
@@ -63,14 +66,36 @@ MesonConfigPage::MesonConfigPage(IPlugin* plugin, IProject* project, QWidget* pa
     reset();
 }
 
-void MesonConfigPage::apply()
+void MesonConfigPage::writeConfig()
 {
-    qCDebug(KDEV_Meson) << "Writing meson config for build dir " << m_current.buildDir;
+    qCDebug(KDEV_Meson) << "Writing config to file";
     if (m_config.currentIndex >= 0) {
-        readCurrentBuildDir();
         m_config.buildDirs[m_config.currentIndex] = m_current;
     }
+
+    if (m_config.buildDirs.isEmpty()) {
+        m_config.currentIndex = -1;
+    } else if (m_config.currentIndex < 0 || m_config.currentIndex >= m_config.buildDirs.size()) {
+        m_config.currentIndex = 0;
+    }
     Meson::writeMesonConfig(m_project, m_config);
+}
+
+void MesonConfigPage::apply()
+{
+    qCDebug(KDEV_Meson) << "Applying meson config for build dir " << m_current.buildDir;
+    readUI();
+    writeConfig();
+
+    if (m_config.currentIndex >= 0) {
+        QStringList args;
+        QList<KJob*> joblist = {
+            new MesonJob(m_current, m_project, MesonJob::SET_CONFIG, args, nullptr),
+            new MesonJob(m_current, m_project, MesonJob::RE_CONFIGURE, args, nullptr),
+        };
+        KJob* job = new ExecuteCompositeJob(nullptr, joblist);
+        job->start();
+    }
 }
 
 void MesonConfigPage::defaults()
@@ -83,27 +108,31 @@ void MesonConfigPage::defaults()
     m_current.mesonBackend = mgr->defaultMesonBackend();
     m_current.mesonExecutable = mgr->findMeson();
 
-    updateCurrentBuildDir();
+    updateUI();
 }
 
 void MesonConfigPage::reset()
 {
     if (m_config.buildDirs.isEmpty()) {
         m_config.currentIndex = -1;
+        m_ui->i_buildDirs->clear();
         setWidgetsDisabled(true);
         return;
     } else if (m_config.currentIndex < 0 || m_config.currentIndex >= m_config.buildDirs.size()) {
         m_config.currentIndex = 0;
+        m_ui->i_buildDirs->blockSignals(true);
+        m_ui->i_buildDirs->setCurrentIndex(m_config.currentIndex);
+        m_ui->i_buildDirs->blockSignals(false);
     }
 
     setWidgetsDisabled(false);
     qCDebug(KDEV_Meson) << "Resetting changes for build dir " << m_current.buildDir;
 
     m_current = m_config.buildDirs[m_config.currentIndex];
-    updateCurrentBuildDir();
+    updateUI();
 }
 
-void MesonConfigPage::updateCurrentBuildDir()
+void MesonConfigPage::updateUI()
 {
     m_ui->i_buildType->setCurrentIndex(1);
 
@@ -123,8 +152,9 @@ void MesonConfigPage::updateCurrentBuildDir()
     m_ui->advanced->setConfig(aConf);
 }
 
-void MesonConfigPage::readCurrentBuildDir()
+void MesonConfigPage::readUI()
 {
+    qCDebug(KDEV_Meson) << "Reading current build configuration from the UI " << m_current.buildDir.toLocalFile();
     m_current.installPrefix = Path(m_ui->i_installPrefix->url());
     m_current.buildType = m_ui->i_buildType->currentText();
 
@@ -136,10 +166,6 @@ void MesonConfigPage::readCurrentBuildDir()
 
 void MesonConfigPage::setWidgetsDisabled(bool disabled)
 {
-    if(disabled) {
-        defaults();
-    }
-
     m_ui->advanced->setDisabled(disabled);
     m_ui->c_01_basic->setDisabled(disabled);
     m_ui->c_02_buildConfig->setDisabled(disabled);
@@ -149,6 +175,10 @@ void MesonConfigPage::setWidgetsDisabled(bool disabled)
 void MesonConfigPage::addBuildDir()
 {
     qCDebug(KDEV_Meson) << "Adding build directory";
+    MesonManager* mgr = dynamic_cast<MesonManager*>(m_project->buildSystemManager());
+    MesonBuilder* bld = dynamic_cast<MesonBuilder*>(mgr->builder());
+    Q_ASSERT(mgr);
+    Q_ASSERT(bld);
     MesonNewBuildDir newBD(m_project);
 
     if (!newBD.exec() || !newBD.isConfigValid()) {
@@ -162,8 +192,12 @@ void MesonConfigPage::addBuildDir()
     m_ui->i_buildDirs->addItem(m_current.buildDir.toLocalFile());
     m_ui->i_buildDirs->setCurrentIndex(m_config.currentIndex);
     m_ui->i_buildDirs->blockSignals(false);
-    apply();
-    reset();
+
+    setWidgetsDisabled(true);
+    writeConfig();
+    KJob* job = bld->configure(m_project);
+    connect(job, &KJob::result, this, [this]() { reset(); });
+    job->start();
 }
 
 void MesonConfigPage::removeBuildDir()
@@ -179,8 +213,8 @@ void MesonConfigPage::removeBuildDir()
     }
     m_ui->i_buildDirs->setCurrentIndex(m_config.currentIndex);
     m_ui->i_buildDirs->blockSignals(false);
-    apply();
     reset();
+    writeConfig();
 }
 
 void MesonConfigPage::changeBuildDirIndex(int index)
@@ -198,6 +232,12 @@ void MesonConfigPage::changeBuildDirIndex(int index)
 
     m_config.currentIndex = index;
     reset();
+    writeConfig();
+}
+
+void MesonConfigPage::emitChanged()
+{
+    emit changed();
 }
 
 QString MesonConfigPage::name() const

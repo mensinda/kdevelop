@@ -222,10 +222,75 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>i_buildDirs</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>MesonConfigPage</receiver>
+   <slot>emitChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>255</x>
+     <y>22</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>249</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>i_installPrefix</sender>
+   <signal>textChanged(QString)</signal>
+   <receiver>MesonConfigPage</receiver>
+   <slot>emitChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>351</x>
+     <y>133</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>249</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>advanced</sender>
+   <signal>configChanged()</signal>
+   <receiver>MesonConfigPage</receiver>
+   <slot>emitChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>293</x>
+     <y>487</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>249</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>i_buildType</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>MesonConfigPage</receiver>
+   <slot>emitChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>351</x>
+     <y>95</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>249</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addBuildDir()</slot>
   <slot>removeBuildDir()</slot>
   <slot>changeBuildDirIndex(int)</slot>
+  <slot>emitChanged()</slot>
  </slots>
 </ui>

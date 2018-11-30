@@ -120,7 +120,7 @@ MesonBuilder::DirectoryStatus MesonBuilder::evaluateBuildDirectory(const Path& p
     return MESON_CONFIGURED;
 }
 
-KJob* MesonBuilder::configure(KDevelop::IProject* project, const Meson::BuildDir& buildDir, DirectoryStatus status)
+KJob* MesonBuilder::configure(IProject* project, const Meson::BuildDir& buildDir, DirectoryStatus status)
 {
     Q_ASSERT(project);
 
@@ -132,12 +132,18 @@ KJob* MesonBuilder::configure(KDevelop::IProject* project, const Meson::BuildDir
         status = evaluateBuildDirectory(buildDir.buildDir, buildDir.mesonBackend);
     }
 
+    KJob* job = nullptr;
+
     switch (status) {
     case DOES_NOT_EXIST:
     case CLEAN:
-        return new MesonJob(buildDir, project, MesonJob::CONFIGURE, {}, this);
+        job = new MesonJob(buildDir, project, MesonJob::CONFIGURE, {}, this);
+        connect(job, &KJob::result, this, [this, project]() { emit configured(project); });
+        return job;
     case MESON_CONFIGURED:
-        return new MesonJob(buildDir, project, MesonJob::RE_CONFIGURE, {}, this);
+        job = new MesonJob(buildDir, project, MesonJob::RE_CONFIGURE, {}, this);
+        connect(job, &KJob::result, this, [this, project]() { emit configured(project); });
+        return job;
     case DIR_NOT_EMPTY:
         return new ErrorJob(
             this,
@@ -218,7 +224,14 @@ KJob* MesonBuilder::prune(KDevelop::IProject* project)
         return new ErrorJob(this, i18n("The current build directory for %1 is invalid", project->name()));
     }
 
-    return new MesonJobPrune(buildDir, this);
+    KJob* job = new MesonJobPrune(buildDir, this);
+    connect(job, &KJob::result, this, [this, project]() { emit pruned(project); });
+    return job;
+}
+
+QList<IProjectBuilder*> MesonBuilder::additionalBuilderPlugins(IProject*) const
+{
+    return { m_ninjaBuilder };
 }
 
 #include "mesonbuilder.moc"

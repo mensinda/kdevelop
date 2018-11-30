@@ -50,11 +50,12 @@ public Q_SLOTS:
     void addBuildDir();
     void removeBuildDir();
     void changeBuildDirIndex(int index);
+    void emitChanged();
 
 private:
-    void updateCurrentBuildDir();
-    void readCurrentBuildDir();
-
+    void updateUI();
+    void readUI();
+    void writeConfig();
     void setWidgetsDisabled(bool disabled);
 
 private:

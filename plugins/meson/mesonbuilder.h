@@ -57,6 +57,8 @@ public:
     /// Evaluate a directory for the use with meson
     static DirectoryStatus evaluateBuildDirectory(KDevelop::Path const& path, QString const& backend);
 
+    QList<KDevelop::IProjectBuilder *> additionalBuilderPlugins(KDevelop::IProject * project) const override;
+
 Q_SIGNALS:
     void built(KDevelop::ProjectBaseItem*);
     void installed(KDevelop::ProjectBaseItem*);
