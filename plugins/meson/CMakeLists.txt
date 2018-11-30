@@ -7,10 +7,15 @@ set(mesonbuilder_SRCS
     mesonjob.cpp
     mesonjobprune.cpp
     mesonmanager.cpp
-    mesonnewbuilddir.cpp
+
+    settings/mesonadvancedsettings.cpp
+    settings/mesonconfigpage.cpp
+    settings/mesonnewbuilddir.cpp
 )
 
-ki18n_wrap_ui(mesonbuilder_SRCS mesonnewbuilddir.ui)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+ki18n_wrap_ui(mesonbuilder_SRCS settings/mesonadvancedsettings.ui settings/mesonconfigpage.ui settings/mesonnewbuilddir.ui)
 ecm_qt_declare_logging_category(mesonbuilder_SRCS
     HEADER debug.h
     IDENTIFIER KDEV_Meson
@@ -20,6 +25,8 @@ ecm_qt_declare_logging_category(mesonbuilder_SRCS
 kdevplatform_add_plugin(kdevmesonmanager
                         JSON kdevmesonmanager.json
                         SOURCES ${mesonbuilder_SRCS})
+
+add_subdirectory(icons)
 
 target_link_libraries(kdevmesonmanager
     Qt5::Concurrent

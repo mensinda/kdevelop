@@ -1,5 +1,6 @@
 /* This file is part of KDevelop
     Copyright 2017 Aleix Pol Gonzalez <aleixpol@kde.org>
+    Copyright 2018 Daniel Mensinger <daniel@mensinger-ka.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -101,7 +102,7 @@ MesonConfig Meson::getMesonConfig(IProject* project)
         currBD.mesonExecutable = Path(current.readEntry(MESON_EXE, QString()));
         currBD.buildType = current.readEntry(BUILD_TYPE, QStringLiteral("debug"));
         currBD.mesonBackend = current.readEntry(BACKEND, QString());
-        currBD.extraMesonArgs = current.readEntry(EXTRA_ARGS, QString());
+        currBD.mesonArgs = current.readEntry(EXTRA_ARGS, QString());
 
         // Try to find meson if the config is bad
         if (currBD.mesonExecutable.isEmpty()) {
@@ -149,7 +150,7 @@ void Meson::writeMesonConfig(IProject* project, const MesonConfig& cfg)
         current.writeEntry(MESON_EXE, i.mesonExecutable.path());
         current.writeEntry(BUILD_TYPE, i.buildType);
         current.writeEntry(BACKEND, i.mesonBackend);
-        current.writeEntry(EXTRA_ARGS, i.extraMesonArgs);
+        current.writeEntry(EXTRA_ARGS, i.mesonArgs);
     }
 }
 

@@ -1,5 +1,6 @@
 /* This file is part of KDevelop
     Copyright 2017 Aleix Pol Gonzalez <aleixpol@kde.org>
+    Copyright 2018 Daniel Mensinger <daniel@mensinger-ka.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public

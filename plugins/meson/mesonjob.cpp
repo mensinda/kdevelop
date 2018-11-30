@@ -51,7 +51,7 @@ MesonJob::MesonJob(Meson::BuildDir const& buildDir, IProject* project, MesonJob:
         *this << QStringLiteral("--backend") << buildDir.mesonBackend;
         *this << QStringLiteral("--buildtype") << buildDir.buildType;
 
-        for (auto const& i : buildDir.extraMesonArgs) {
+        for (auto const& i : buildDir.mesonArgs) {
             *this << i;
         }
 

@@ -1,5 +1,6 @@
 /* This file is part of KDevelop
     Copyright 2017 Aleix Pol Gonzalez <aleixpol@kde.org>
+    Copyright 2018 Daniel Mensinger <daniel@mensinger-ka.de>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -21,8 +22,10 @@
 #include "mesonbuilder.h"
 #include "mesonconfig.h"
 #include "mesonimportjob.h"
-#include "mesonnewbuilddir.h"
+#include "settings/mesonconfigpage.h"
+#include "settings/mesonnewbuilddir.h"
 #include <interfaces/iproject.h>
+#include <project/projectconfigpage.h>
 #include <project/projectmodel.h>
 #include <util/executecompositejob.h>
 
@@ -164,6 +167,19 @@ Path MesonManager::findMeson() const
 void MesonManager::setProjectData(IProject* project, const QJsonObject& data)
 {
     m_projects[project] = data;
+}
+
+ConfigPage* MesonManager::perProjectConfigPage(int number, const ProjectConfigOptions& options, QWidget* parent)
+{
+    if (number == 0) {
+        return new MesonConfigPage(this, options.project, parent);
+    }
+    return nullptr;
+}
+
+int MesonManager::perProjectConfigPages() const
+{
+    return 1;
 }
 
 #include "mesonmanager.moc"

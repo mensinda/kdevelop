@@ -1,5 +1,4 @@
 /* This file is part of KDevelop
-    Copyright 2017 Aleix Pol Gonzalez <aleixpol@kde.org>
     Copyright 2018 Daniel Mensinger <daniel@mensinger-ka.de>
 
     This library is free software; you can redistribute it and/or
@@ -20,40 +19,40 @@
 
 #pragma once
 
-#include <KConfigGroup>
-#include <util/path.h>
+#include "util/path.h"
+#include <QWidget>
 
-namespace KDevelop
+namespace Ui
 {
-class IProject;
+class MesonAdvancedSettings;
 }
 
-namespace Meson
+class MesonAdvancedSettings : public QWidget
 {
+    Q_OBJECT
+public:
+    struct Data {
+        QString backend;
+        QString args;
+        KDevelop::Path meson;
+    };
 
-struct BuildDir {
-    KDevelop::Path buildDir;
-    KDevelop::Path installPrefix;
-    KDevelop::Path mesonExecutable;
-    QString buildType;
-    QString mesonBackend;
-    QString mesonArgs;
+public:
+    explicit MesonAdvancedSettings(QWidget* parent = nullptr);
+    ~MesonAdvancedSettings() override;
 
-    bool isValid() const;
+    Data getConfig() const;
+    void setConfig(Data const& conf);
+
+    void setSupportedBackends(QStringList const& backends);
+
+Q_SIGNALS:
+    void configChanged();
+
+public Q_SLOTS:
+    void updated();
+
+private:
+    Ui::MesonAdvancedSettings* m_ui = nullptr;
+    QStringList m_backendList;
 };
-
-struct MesonConfig
-{
-    int currentIndex = -1;
-    QVector<BuildDir> buildDirs;
-
-    int addBuildDir(BuildDir dir);
-    bool removeBuildDir(int index);
-};
-
-KConfigGroup rootGroup(KDevelop::IProject* project);
-BuildDir currentBuildDir(KDevelop::IProject* project);
-MesonConfig getMesonConfig(KDevelop::IProject* project);
-void writeMesonConfig(KDevelop::IProject* project, MesonConfig const& cfg);
-
-}

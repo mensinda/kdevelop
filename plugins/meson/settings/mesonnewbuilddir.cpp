@@ -42,13 +42,16 @@ MesonNewBuildDir::MesonNewBuildDir(IProject* project, QWidget* parent)
     , m_project(project)
 {
     Q_ASSERT(project); // Just in case
+    MesonManager* mgr = dynamic_cast<MesonManager*>(m_project->buildSystemManager());
+    Q_ASSERT(mgr); // This dialog only works with the MesonManager
 
     setWindowTitle(
         i18n("Configure a build directory - %1", ICore::self()->runtimeController()->currentRuntime()->name()));
 
     m_ui = new Ui::MesonNewBuildDir;
     m_ui->setupUi(this);
-    m_ui->c_03_advancedConfig->hide();
+
+    m_ui->advanced->setSupportedBackends(mgr->supportedMesonBackends());
 
     connect(m_ui->b_buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton* b) {
         if (m_ui->b_buttonBox->buttonRole(b) == QDialogButtonBox::ResetRole) {
@@ -71,6 +74,8 @@ void MesonNewBuildDir::resetFields()
     MesonManager* mgr = dynamic_cast<MesonManager*>(m_project->buildSystemManager());
     Q_ASSERT(mgr); // This dialog only works with the MesonManager
 
+    auto aConf = m_ui->advanced->getConfig();
+
     // Find a build dir that is not already configured
     Path buildDirPath = projectPath;
     buildDirPath.addPath(QStringLiteral("build"));
@@ -92,7 +97,7 @@ void MesonNewBuildDir::resetFields()
     m_ui->i_buildDir->setUrl(buildDirPath.toUrl());
 
     // Init build type
-    // TODO use introspection once it can be used without a build directory
+    // TODO use introspection once https://github.com/mesonbuild/meson/pull/4564 is merged
     QStringList buildTypes = { QStringLiteral("plain"),   QStringLiteral("debug"),   QStringLiteral("debugoptimized"),
                                QStringLiteral("release"), QStringLiteral("minsize"), QStringLiteral("custom") };
 
@@ -104,17 +109,15 @@ void MesonNewBuildDir::resetFields()
     m_ui->i_installPrefix->clear();
 
     // Extra args
-    m_ui->i_mesonArgs->clear();
+    aConf.args.clear();
 
     // Backend
-    auto backendList = mgr->supportedMesonBackends();
-    m_ui->i_backend->clear();
-    m_ui->i_backend->addItems(backendList);
-    m_ui->i_backend->setCurrentIndex(std::max(0, backendList.indexOf(mgr->defaultMesonBackend())));
+    aConf.backend = mgr->defaultMesonBackend();
 
     // Meson exe
-    m_ui->i_mesonExe->setUrl(mgr->findMeson().toUrl());
+    aConf.meson = mgr->findMeson();
 
+    m_ui->advanced->setConfig(aConf);
     updated();
 }
 
@@ -143,9 +146,9 @@ void MesonNewBuildDir::setStatus(const QString& str, bool validConfig)
 
 void MesonNewBuildDir::updated()
 {
+    auto advanced = m_ui->advanced->getConfig();
     Path buildDir = Path(m_ui->i_buildDir->url());
-    QFileInfo mesonExe(m_ui->i_mesonExe->url().path());
-    QString backend = m_ui->i_backend->currentText();
+    QFileInfo mesonExe(advanced.meson.toLocalFile());
 
     if (!mesonExe.exists() || !mesonExe.isExecutable()
         || !mesonExe.permission(QFileDevice::ReadUser | QFileDevice::ExeUser)) {
@@ -153,7 +156,7 @@ void MesonNewBuildDir::updated()
         return;
     }
 
-    MesonBuilder::DirectoryStatus status = MesonBuilder::evaluateBuildDirectory(buildDir, backend);
+    MesonBuilder::DirectoryStatus status = MesonBuilder::evaluateBuildDirectory(buildDir, advanced.backend);
     switch (status) {
     case MesonBuilder::CLEAN:
     case MesonBuilder::DOES_NOT_EXIST:
@@ -185,12 +188,14 @@ Meson::BuildDir MesonNewBuildDir::currentConfig() const
         return buildDir;
     }
 
+    auto advanced = m_ui->advanced->getConfig();
+
     buildDir.buildDir = Path(m_ui->i_buildDir->url());
     buildDir.buildType = m_ui->i_buildType->currentText();
     buildDir.installPrefix = Path(m_ui->i_installPrefix->url());
-    buildDir.extraMesonArgs = m_ui->i_mesonArgs->text();
-    buildDir.mesonBackend = m_ui->i_backend->currentText();
-    buildDir.mesonExecutable = Path(m_ui->i_mesonExe->url());
+    buildDir.mesonArgs = advanced.args;
+    buildDir.mesonBackend = advanced.backend;
+    buildDir.mesonExecutable = advanced.meson;
 
     return buildDir;
 }

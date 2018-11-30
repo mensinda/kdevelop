@@ -99,7 +99,7 @@
            <x>0</x>
            <y>0</y>
            <width>618</width>
-           <height>131</height>
+           <height>353</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -137,87 +137,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="b_showAdvanced">
-     <property name="text">
-      <string>Show advanced configuration</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="c_03_advancedConfig">
-     <property name="title">
-      <string>Advanced configuration</string>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_4">
-      <item>
-       <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="QLabel" name="l_mesonArgs">
-          <property name="text">
-           <string>Extra Meson arguments:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="l_backend">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="text">
-           <string>Meson backend:</string>
-          </property>
-          <property name="scaledContents">
-           <bool>false</bool>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="l_mesonExe">
-          <property name="text">
-           <string>Meson executable:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="KLineEdit" name="i_mesonArgs">
-          <property name="placeholderText">
-           <string>Extra meson configuration arguments</string>
-          </property>
-          <property name="showClearButton" stdset="0">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="KComboBox" name="i_backend"/>
-        </item>
-        <item row="2" column="1">
-         <widget class="KUrlRequester" name="i_mesonExe">
-          <property name="placeholderText">
-           <string>Path to the meson executable</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QPushButton" name="b_hideAdvanced">
-        <property name="text">
-         <string>Hide advanced configuration</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
+    <widget class="MesonAdvancedSettings" name="advanced" native="true"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -247,11 +167,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>klineedit.h</header>
-  </customwidget>
-  <customwidget>
    <class>KComboBox</class>
    <extends>QComboBox</extends>
    <header>kcombobox.h</header>
@@ -261,73 +176,18 @@
    <extends>QWidget</extends>
    <header>kurlrequester.h</header>
   </customwidget>
+  <customwidget>
+   <class>MesonAdvancedSettings</class>
+   <extends>QWidget</extends>
+   <header>settings/mesonadvancedsettings.h</header>
+   <container>1</container>
+   <slots>
+    <signal>configChanged()</signal>
+   </slots>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections>
-  <connection>
-   <sender>b_showAdvanced</sender>
-   <signal>clicked()</signal>
-   <receiver>c_03_advancedConfig</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>310</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>429</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>b_showAdvanced</sender>
-   <signal>clicked()</signal>
-   <receiver>b_showAdvanced</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>310</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>310</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>b_hideAdvanced</sender>
-   <signal>clicked()</signal>
-   <receiver>c_03_advancedConfig</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>500</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>429</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>b_hideAdvanced</sender>
-   <signal>clicked()</signal>
-   <receiver>b_showAdvanced</receiver>
-   <slot>show()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>500</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>310</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>b_buttonBox</sender>
    <signal>accepted()</signal>
@@ -377,14 +237,14 @@
    </hints>
   </connection>
   <connection>
-   <sender>i_mesonExe</sender>
-   <signal>textChanged(QString)</signal>
+   <sender>advanced</sender>
+   <signal>configChanged()</signal>
    <receiver>MesonNewBuildDir</receiver>
    <slot>updated()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>402</x>
-     <y>511</y>
+     <x>324</x>
+     <y>571</y>
     </hint>
     <hint type="destinationlabel">
      <x>324</x>

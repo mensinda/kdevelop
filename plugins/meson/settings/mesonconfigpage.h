@@ -1,5 +1,4 @@
 /* This file is part of KDevelop
-    Copyright 2017 Aleix Pol Gonzalez <aleixpol@kde.org>
     Copyright 2018 Daniel Mensinger <daniel@mensinger-ka.de>
 
     This library is free software; you can redistribute it and/or
@@ -20,40 +19,47 @@
 
 #pragma once
 
-#include <KConfigGroup>
-#include <util/path.h>
+#include <interfaces/configpage.h>
+#include "mesonconfig.h"
 
 namespace KDevelop
 {
+class IPlugin;
 class IProject;
 }
 
-namespace Meson
-{
-
-struct BuildDir {
-    KDevelop::Path buildDir;
-    KDevelop::Path installPrefix;
-    KDevelop::Path mesonExecutable;
-    QString buildType;
-    QString mesonBackend;
-    QString mesonArgs;
-
-    bool isValid() const;
-};
-
-struct MesonConfig
-{
-    int currentIndex = -1;
-    QVector<BuildDir> buildDirs;
-
-    int addBuildDir(BuildDir dir);
-    bool removeBuildDir(int index);
-};
-
-KConfigGroup rootGroup(KDevelop::IProject* project);
-BuildDir currentBuildDir(KDevelop::IProject* project);
-MesonConfig getMesonConfig(KDevelop::IProject* project);
-void writeMesonConfig(KDevelop::IProject* project, MesonConfig const& cfg);
-
+namespace Ui {
+    class MesonConfigPage;
 }
+
+class MesonConfigPage : public KDevelop::ConfigPage
+{
+    Q_OBJECT
+public:
+    explicit MesonConfigPage(KDevelop::IPlugin* plugin, KDevelop::IProject *project, QWidget* parent = nullptr);
+
+    QString name() const override;
+    QString fullName() const override;
+    QIcon icon() const override;
+
+public Q_SLOTS:
+    void apply() override;
+    void defaults() override;
+    void reset() override;
+
+    void addBuildDir();
+    void removeBuildDir();
+    void changeBuildDirIndex(int index);
+
+private:
+    void updateCurrentBuildDir();
+    void readCurrentBuildDir();
+
+    void setWidgetsDisabled(bool disabled);
+
+private:
+    KDevelop::IProject *m_project = nullptr;
+    Ui::MesonConfigPage *m_ui = nullptr;
+    Meson::MesonConfig m_config;
+    Meson::BuildDir m_current;
+};
