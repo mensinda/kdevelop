@@ -44,7 +44,7 @@ MesonJob::MesonJob(Meson::BuildDir const& buildDir, IProject* project, MesonJob:
 
     switch (m_commandType) {
     case CONFIGURE:
-        if(!buildDir.installPrefix.isEmpty()) {
+        if (!buildDir.installPrefix.isEmpty()) {
             *this << QStringLiteral("--prefix") << buildDir.installPrefix.toLocalFile();
         }
 
@@ -59,8 +59,15 @@ MesonJob::MesonJob(Meson::BuildDir const& buildDir, IProject* project, MesonJob:
     case RE_CONFIGURE:
         *this << QStringLiteral("--reconfigure");
         break;
+    case SET_CONFIG:
+        *this << QStringLiteral("configure");
+        if (!buildDir.installPrefix.isEmpty()) {
+            *this << QStringLiteral("-Dprefix=") + buildDir.installPrefix.toLocalFile();
+        }
+        *this << QStringLiteral("-Dbuildtype=") + buildDir.buildType;
     }
 
+    *this << m_arguments;
     *this << buildDir.buildDir.toLocalFile();
 }
 

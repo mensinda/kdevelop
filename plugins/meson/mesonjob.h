@@ -35,7 +35,7 @@ class MesonJob : public KDevelop::OutputExecuteJob
 {
     Q_OBJECT
 public:
-    enum CommandType { CONFIGURE, RE_CONFIGURE };
+    enum CommandType { CONFIGURE, RE_CONFIGURE, SET_CONFIG };
 
 public:
     MesonJob(Meson::BuildDir const& buildDir, KDevelop::IProject* project, CommandType commandType,

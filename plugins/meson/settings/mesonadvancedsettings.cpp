@@ -62,5 +62,5 @@ void MesonAdvancedSettings::setSupportedBackends(const QStringList& backends)
 
 void MesonAdvancedSettings::updated()
 {
-    emit(configChanged());
+    emit configChanged();
 }
