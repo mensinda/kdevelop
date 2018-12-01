@@ -147,12 +147,12 @@ KJob* MesonBuilder::configure(IProject* project, const Meson::BuildDir& buildDir
     case DIR_NOT_EMPTY:
         return new ErrorJob(
             this,
-            i18n("The directory '%1' is not empty and does not seam to be an already configured build directory",
+            i18n("The directory '%1' is not empty and does not seem to be an already configured build directory",
                  buildDir.buildDir.toLocalFile()));
     case INVALID_BUILD_DIR:
         return new ErrorJob(
             this,
-            i18n("The directory '%1' can not be used as a meson build directory", buildDir.buildDir.toLocalFile()));
+            i18n("The directory '%1' cannot be used as a meson build directory", buildDir.buildDir.toLocalFile()));
     case EMPTY_STRING:
         return new ErrorJob(
             this, i18n("The current build configuration is broken, because the build directory is not specified"));

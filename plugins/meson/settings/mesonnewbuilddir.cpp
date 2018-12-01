@@ -166,7 +166,7 @@ void MesonNewBuildDir::updated()
         setStatus(i18n("Using already configured build directory"), true);
         break;
     case MesonBuilder::INVALID_BUILD_DIR:
-        setStatus(i18n("Can not use specified directory"), false);
+        setStatus(i18n("Cannot use specified directory"), false);
         break;
     case MesonBuilder::DIR_NOT_EMPTY:
         setStatus(i18n("There are already files in the build directory"), false);
@@ -184,7 +184,7 @@ Meson::BuildDir MesonNewBuildDir::currentConfig() const
 {
     Meson::BuildDir buildDir;
     if (!m_configIsValid) {
-        qCDebug(KDEV_Meson) << "Can not generate build dir config from invalid config";
+        qCDebug(KDEV_Meson) << "Cannot generate build dir config from invalid config";
         return buildDir;
     }
 
